@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <util/m_string.h>
 
 CURL *curl;
 CURLcode res;
@@ -61,14 +62,40 @@ PARSER_CODE Parser_init(const char *url, html_content *content) {
     return PARSER_OK;
 }
 
+static int Parser_find_first(html_content *html, STR tag, unsigned int offset) {
+    int pos = 0;
+    char same = 0;
+    for(int i = offset, j = 0; i < html->size; i++, j++) {
+        if (tag[j] == html->html[i]) {
+            same = 1;
+            pos = i;
+        } else if(same == 1) {
+            if (STRLEN(tag) == j - 1) {
+                return pos;
+            }
+        }
+    }
+
+    return 0;
+}
 
 
-static PARSER_CODE Parser_pars_one_tag(char *tag, html_content *page) {
-    char *buf = malloc(sizeof(char) * page->size);
+static PARSER_CODE Parser_pars_one_tag(char *open_tag, char *close_tag, html_content *page) {
+    int open_pos = Parser_find_first(page, newstr(open_tag), 0);
+    int close_pos = Parser_find_first(page, newstr(close_tag), open_pos);
+    char *buf = malloc(sizeof(char) * close_pos - open_pos + 2);
 
+    if (close_pos - open_pos < 1) {
+        return PARSER_PARS_ERROR;
+    }
+    memcpy(buf, &page->html[open_pos], close_pos - open_pos);
+    if (page->parser_content == NULL) {
+        page->parser_content = malloc(sizeof(char) * close_pos - open_pos + 1);
+    } else {
+        page->parser_content = realloc(page->parser_content, sizeof(char) * close_pos - open_pos + 1);
+    } 
 
-
-
+    strcpy(page->parser_content, buf);
 
     free(buf);
     return PARSER_OK;

@@ -54,15 +54,54 @@ PARSER_CODE Parser_init(const char *url, html_content *content) {
     if (m.size <= 1) {
         return PARSER_WRITEFUNC_ERROR;
     }
+    content->html = malloc(sizeof(char) * m.size);
+    content->size = m.size;
+    content->parser_content = NULL;
 
-
-
-
+    return PARSER_OK;
 }
 
 
-PARSER_CODE Parser_pars(const char *expression, html_content *page);
+
+static PARSER_CODE Parser_pars_one_tag(char *tag, html_content *page) {
+    char *buf = malloc(sizeof(char) * page->size);
+
+
+
+
+
+    free(buf);
+    return PARSER_OK;
+}
+
+
+PARSER_CODE Parser_pars(const char *expression, html_content *page) {
+
+    return PARSER_OK;
+}
 
 void Paresr_cleanup(html_content *page) {
-
+    if (page != NULL) {
+        if (page->html == NULL) {
+            if (page->parser_content == NULL) {
+                free(page);
+                return;
+            } else {
+                free(page->parser_content);
+                free(page);
+                return;
+            }
+        } else {
+            free(page->html);
+            if (page->parser_content == NULL) {
+                free(page);
+                return;
+            } else {
+                free(page->parser_content);
+                free(page);
+                return;
+            }
+        }
+    }
+    curl_easy_cleanup(curl);
 }

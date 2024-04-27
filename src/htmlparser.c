@@ -20,7 +20,16 @@ typedef struct {
     char close_tag[32];
     char *tag_type;
     char *tag_value;
+    char tag_velosity;
 } TAG;
+
+
+static void Tag_free(void *temp) {
+    TAG *t = (TAG *) temp;
+    free(t->tag_type);
+    free(t->tag_value);
+    free(t);
+}
 
 static size_t mem_translate(void *data, size_t size, size_t size_m, void *user_data) {
     size_t real_size = size * size_m;
@@ -111,16 +120,81 @@ static PARSER_CODE Parser_pars_one_tag(char *open_tag, char *close_tag, html_con
 
 static List *Parser_list_expression(const char *expression) {
     List *tags_expression = list_create(0, l_struct);
+    tags_expression->type_size = sizeof(TAG);
     int exp_len = strlen(expression);
 
-    TAG *t = (TAG *) malloc(sizeof(TAG));
+    char buf[128];
+    int bc = 0;
+    int tags = 0;
+
+    for(int i = 0; i < exp_len; i++) {
+        TAG *t = (TAG *) malloc(sizeof(TAG));
+        t->tag_velosity = 0;
+        memset(t->tag, 0, 32);
+        memset(t->close_tag, 0, 32);
+        if (expression[i] == '>') {
+            list_add(tags_expression, t);
+        } else if (expression[i] == ' ') {
+            switch (tags) {
+                case 0 :{
+                    strcpy(t->tag, buf);
+                    memset(buf, 0, 128);
+                    bc = 0;
+                } break;
+                case 1: {
+                    t->tag_type = malloc(sizeof(char) * strlen(buf) + 1);
+                    strcpy(t->tag_type, buf);
+                    memset(buf, 0, 128);
+                    bc = 0;
+                } break;
+                case 2:{
+                    t->tag_value = malloc(sizeof(char) * strlen(buf) + 1);
+                    strcpy(t->tag_value, buf);
+                    memset(buf, 0, 128);
+                    bc = 0;
+                } break;
+            }
+            tags++;
+            t->tag_velosity++;
+        }
+        else {
+            buf[bc++] = expression[i];
+        }
+    }
+    return tags_expression;
 }
 
 
 
 PARSER_CODE Parser_pars(const char *expression, html_content *page) {
     List *tags_expression = Parser_list_expression(expression);
+    char open_tag[264] = {0};
+    char close_tag[32] = {0};
 
+    for(int i = 0; i < tags_expression->len; i++) {
+        TAG *t = (TAG *) list_get(tags_expression, i);
+        switch(t->tag_velosity) {
+            case 0: {
+                fprintf(stderr, "Error, tag_velosity is 0\n");
+                return PARSER_PARS_ERROR;
+            } break;
+            case 1: {
+                snprintf(open_tag, 264, "<%s>", t->tag);
+                snprintf(close_tag, 32, "</%s>", t->tag);
+            } break;
+            case 2: {
+                snprintf(open_tag, 264, "<%s %s=\"\">", t->tag, t->tag_type);
+                snprintf(close_tag, 32, "</%s>", t->tag);
+            }
+        }
+
+    }
+
+
+
+
+
+    list_free_all_struct(tags_expression, Tag_free);
     return PARSER_OK;
 }
 

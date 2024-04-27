@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <util/m_string.h>
+#include <util/m_list.h>
 
 CURL *curl;
 CURLcode res;
@@ -13,6 +14,13 @@ struct mem_t{
     char *data;
     size_t size;
 };
+
+typedef struct {
+    char tag[32];
+    char close_tag[32];
+    char *tag_type;
+    char *tag_value;
+} TAG;
 
 static size_t mem_translate(void *data, size_t size, size_t size_m, void *user_data) {
     size_t real_size = size * size_m;
@@ -101,8 +109,17 @@ static PARSER_CODE Parser_pars_one_tag(char *open_tag, char *close_tag, html_con
     return PARSER_OK;
 }
 
+static List *Parser_list_expression(const char *expression) {
+    List *tags_expression = list_create(0, l_struct);
+    int exp_len = strlen(expression);
+
+    TAG *t = (TAG *) malloc(sizeof(TAG));
+}
+
+
 
 PARSER_CODE Parser_pars(const char *expression, html_content *page) {
+    List *tags_expression = Parser_list_expression(expression);
 
     return PARSER_OK;
 }

@@ -100,11 +100,17 @@ static List *Parser_list_expression(const char *expression) {
     boolean type_has_content = false;
     int bc = 0;
     TAG *t = malloc(sizeof(TAG));
+    t->type_count = 0;
+    memset(t->tag, 0, 32);
 
     for(int i = 0; i < exp_len; i++) {
         if (expression[i] == '>') {
             list_add(tags_expression, t);
             t = malloc(sizeof(TAG));
+            t->type_count = 0;
+            memset(t->tag, 0, 32);
+            in_type = false;
+            type_has_content = false;
         } else if (expression[i] == ' ' && in_type) {
             if (type_has_content) {
                 memset(buf, 0, 128);
@@ -124,7 +130,6 @@ static List *Parser_list_expression(const char *expression) {
             memset(buf, 0, 128);
             bc = 0;
         } else if (expression[i] == ']') {
-            in_type = false;
             if (type_has_content) {
                 memset(buf, 0, 128);
                 bc = 0;

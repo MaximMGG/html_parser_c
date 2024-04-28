@@ -16,19 +16,19 @@ struct mem_t{
 };
 
 typedef struct {
+    char type_name[32];
+    char type_content[128];
+} tag_type;
+
+typedef struct {
     char tag[32];
-    char close_tag[32];
-    char *tag_type;
-    char *tag_value;
-    char tag_velosity;
+    tag_type t_type[8];
+    unsigned int type_count;
 } TAG;
 
 
 static void Tag_free(void *temp) {
-    TAG *t = (TAG *) temp;
-    free(t->tag_type);
-    free(t->tag_value);
-    free(t);
+    free(temp);
 }
 
 static size_t mem_translate(void *data, size_t size, size_t size_m, void *user_data) {
@@ -80,44 +80,15 @@ PARSER_CODE Parser_init(const char *url, html_content *content) {
 }
 
 static int Parser_find_first(html_content *html, STR tag, unsigned int offset) {
-    int pos = 0;
-    char same = 0;
-    for(int i = offset, j = 0; i < html->size; i++, j++) {
-        if (tag[j] == html->html[i]) {
-            same = 1;
-            pos = i;
-        } else if(same == 1) {
-            if (STRLEN(tag) == j - 1) {
-                return pos;
-            }
-        }
-    }
-
-    return 0;
 }
 
 
 static PARSER_CODE Parser_pars_one_tag(char *open_tag, char *close_tag, html_content *page) {
-    int open_pos = Parser_find_first(page, newstr(open_tag), 0);
-    int close_pos = Parser_find_first(page, newstr(close_tag), open_pos);
-    char *buf = malloc(sizeof(char) * close_pos - open_pos + 2);
 
-    if (close_pos - open_pos < 1) {
-        return PARSER_PARS_ERROR;
-    }
-    memcpy(buf, &page->html[open_pos], close_pos - open_pos);
-    if (page->parser_content == NULL) {
-        page->parser_content = malloc(sizeof(char) * close_pos - open_pos + 1);
-    } else {
-        page->parser_content = realloc(page->parser_content, sizeof(char) * close_pos - open_pos + 1);
-    } 
-
-    strcpy(page->parser_content, buf);
-
-    free(buf);
-    return PARSER_OK;
 }
 
+//body > div[class(main)]
+//link[rel type href]
 static List *Parser_list_expression(const char *expression) {
     List *tags_expression = list_create(0, l_struct);
     tags_expression->type_size = sizeof(TAG);
@@ -128,38 +99,7 @@ static List *Parser_list_expression(const char *expression) {
     int tags = 0;
 
     for(int i = 0; i < exp_len; i++) {
-        TAG *t = (TAG *) malloc(sizeof(TAG));
-        t->tag_velosity = 0;
-        memset(t->tag, 0, 32);
-        memset(t->close_tag, 0, 32);
-        if (expression[i] == '>') {
-            list_add(tags_expression, t);
-        } else if (expression[i] == ' ') {
-            switch (tags) {
-                case 0 :{
-                    strcpy(t->tag, buf);
-                    memset(buf, 0, 128);
-                    bc = 0;
-                } break;
-                case 1: {
-                    t->tag_type = malloc(sizeof(char) * strlen(buf) + 1);
-                    strcpy(t->tag_type, buf);
-                    memset(buf, 0, 128);
-                    bc = 0;
-                } break;
-                case 2:{
-                    t->tag_value = malloc(sizeof(char) * strlen(buf) + 1);
-                    strcpy(t->tag_value, buf);
-                    memset(buf, 0, 128);
-                    bc = 0;
-                } break;
-            }
-            tags++;
-            t->tag_velosity++;
-        }
-        else {
-            buf[bc++] = expression[i];
-        }
+
     }
     return tags_expression;
 }

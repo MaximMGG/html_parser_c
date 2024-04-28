@@ -26,7 +26,6 @@ typedef struct {
     unsigned int type_count;
 } TAG;
 
-
 static void Tag_free(void *temp) {
     free(temp);
 }
@@ -46,7 +45,6 @@ static size_t mem_translate(void *data, size_t size, size_t size_m, void *user_d
 
     return real_size;
 }
-
 
 
 PARSER_CODE Parser_init(const char *url, html_content *content) {
@@ -80,11 +78,13 @@ PARSER_CODE Parser_init(const char *url, html_content *content) {
 }
 
 static int Parser_find_first(html_content *html, STR tag, unsigned int offset) {
+    return 0;
 }
 
 
 static PARSER_CODE Parser_pars_one_tag(char *open_tag, char *close_tag, html_content *page) {
 
+    return 0;
 }
 
 //body > div[class(main)]
@@ -95,12 +95,64 @@ static List *Parser_list_expression(const char *expression) {
     int exp_len = strlen(expression);
 
     char buf[128];
+    boolean in_type = false;
+    boolean type_has_content = false;
     int bc = 0;
-    int tags = 0;
+    TAG *t;
 
     for(int i = 0; i < exp_len; i++) {
-
+        t = malloc(sizeof(TAG));
+        if (expression[i] == '>') {
+            list_add(tags_expression, t);
+            memset(buf, 0, 128);
+            bc = 0;
+        } else if (expression[i] == ' ' && in_type) {
+            if (type_has_content) {
+                memset(buf, 0, 128);
+                bc = 0;
+            } else {
+                strcpy(t->t_type[t->type_count++].type_name, buf);
+                memset(buf, 0, 128);
+                bc = 0;
+            }
+        } else if (expression[i] == ' ') {
+            strcpy(t->tag, buf);
+            memset(buf, 0, 128);
+            bc = 0;
+        } else if (expression[i] == '[') {
+            in_type = true;
+        } else if (expression[i] == ']') {
+            in_type = false;
+            if (type_has_content) {
+                memset(buf, 0, 128);
+                bc = 0;
+                type_has_content = false;
+            } else {
+                strcpy(t->t_type[t->type_count++].type_name, buf);
+                memset(buf, 0, 128);
+                bc = 0;
+            }
+        } else if (expression[i] == '(') {
+            type_has_content = true;
+            strcpy(t->t_type[t->type_count++].type_name, buf);
+            memset(buf, 0, 128);
+            bc = 0;
+        } else if (expression[i] == ')') {
+            strcpy(t->t_type[t->type_count++].type_content, buf);
+            memset(buf, 0, 128);
+            bc = 0;
+        } else {
+            buf[bc++] = expression[i];
+        }
     }
+
+    if (in_type) {
+        list_add(tags_expression, t);
+    } else {
+        strcpy(t->tag, buf);
+        list_add(tags_expression, t);
+    }
+
     return tags_expression;
 }
 
@@ -112,27 +164,7 @@ PARSER_CODE Parser_pars(const char *expression, html_content *page) {
     char close_tag[32] = {0};
 
     for(int i = 0; i < tags_expression->len; i++) {
-        TAG *t = (TAG *) list_get(tags_expression, i);
-        switch(t->tag_velosity) {
-            case 0: {
-                fprintf(stderr, "Error, tag_velosity is 0\n");
-                return PARSER_PARS_ERROR;
-            } break;
-            case 1: {
-                snprintf(open_tag, 264, "<%s>", t->tag);
-                snprintf(close_tag, 32, "</%s>", t->tag);
-            } break;
-            case 2: {
-                snprintf(open_tag, 264, "<%s %s=\"\">", t->tag, t->tag_type);
-                snprintf(close_tag, 32, "</%s>", t->tag);
-            }
-        }
-
     }
-
-
-
-
 
     list_free_all_struct(tags_expression, Tag_free);
     return PARSER_OK;

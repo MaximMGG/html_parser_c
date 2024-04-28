@@ -1,6 +1,8 @@
 #include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util/assert.h>
+#include "../headers/htmlparser.h"
 
 
 struct mem {
@@ -26,6 +28,14 @@ static unsigned int write_byte_func(void *data, unsigned int size, unsigned int 
 }
 
 
+void do_test() {
+    html_content *c = malloc(sizeof(html_content));
+    Parser_init("example.com", c);
+    Parser_pars("div > div[class]", c);
+}
+
+
+
 
 int main() {
 
@@ -48,6 +58,10 @@ int main() {
 
     free(chunk.data);
     curl_easy_cleanup(curl);
+
+    assert_begin(ASSERT_DEFAULT);
+    assert_call(do_test);
+    assert_end();
 
     return 0;
 }

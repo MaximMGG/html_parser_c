@@ -77,12 +77,39 @@ PARSER_CODE Parser_init(const char *url, html_content *content) {
     return PARSER_OK;
 }
 
-static int Parser_find_first(html_content *html, STR tag, unsigned int offset) {
-    return 0;
-}
+static int Parser_find_first(html_content *html, TAG *tag) {
+
+    int same_tag = 0;
+    boolean first_match = false;
+    int tag_start = 0;
+    int tag_end = 0;
+    char buf[512] = {0};
+    int s = strlen(tag->tag);
+    strcpy(buf, tag->tag);
+    buf[s] = ' ';
 
 
-static PARSER_CODE Parser_pars_one_tag(char *open_tag, char *close_tag, html_content *page) {
+    int iter = 0;
+
+    while(tag->t_type[iter].type_name[0] != 0) {
+        strcpy(&(buf[s + 1]), tag->t_type[iter].type_name);
+        s += strlen(tag->t_type[iter].type_name);
+        if (tag->t_type[iter].type_content[0] != 0) {
+            strcpy(&(buf[s]), tag->t_type[iter].type_content);
+            s += strlen(tag->t_type[iter].type_content);
+        }
+        iter++;
+    }
+
+    s = strlen(buf);
+
+    for(int i = 0, j = 0; i < html->size; i++) {
+        if (html->parser_content[i] == buf[j] && first_match == false) {
+            tag_start = i;
+        } else if (html->parser_content[i] == buf[i]) {
+
+        }
+   }
 
     return 0;
 }
@@ -171,6 +198,7 @@ PARSER_CODE Parser_pars(const char *expression, html_content *page) {
     char close_tag[32] = {0};
 
     for(int i = 0; i < tags_expression->len; i++) {
+
     }
 
     list_free_all_struct(tags_expression, Tag_free);

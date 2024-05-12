@@ -2,7 +2,9 @@
 #define HTML_PARSER
 
 #include <string>
+#include <stdlib.h>
 #include <list>
+#include <curl/curl.h>
 #include <string.h>
 
 
@@ -179,14 +181,67 @@ namespace Parser {
         private:
             std::list<std::string> html;
             std::string url;
+            CURL *curl;
+            CURLcode res;
 
+            struct mem {
+                char *res;
+                size_t size;
+
+            };
 
         public:
             Url(std::string url) : url(url) {}
             ~Url(){}
 
-            void connect() {
 
+            static size_t mset(void *data, size_t size, size_t smemb, void *res) {
+                size_t real_size = size * smemb;
+                struct mem *m = (struct mem *) res;
+
+                char *p = (char *)realloc(m->res, m->size + real_size + 1);
+                if (!p) {
+                    return 0;
+                }
+
+                m->res = p;
+                memcpy(&(m->res[m->size]), data, real_size);
+                m->size += real_size;
+                m->res[real_size] = 0;
+
+                return real_size;
+            }
+
+
+
+            void connect() {
+                curl = curl_easy_init();
+
+                struct mem m {0};
+
+                curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+                curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&m);
+                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, mset);
+
+                res = curl_easy_perform(curl);
+
+                int len = strlen(m.res);
+                char buf[512]{0};
+
+                for(int i = 0, j = 0; i < len; i++) {
+                    if (m.res[i] == '\n') {
+                        html.push_back(buf);
+                        memset(buf, 0, 512);
+                    } else {
+                        buf[j] = m.res[i];
+                    }
+                } 
+
+                free(m.res);
+            }
+
+            std::list<std::string> get_html() {
+                return html;
             }
     };
 }

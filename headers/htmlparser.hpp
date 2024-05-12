@@ -48,13 +48,13 @@ namespace Parser {
                                       j = 0;
                                   } break;
                         default: {
-                            buf[j] = expression[i];
+                            buf[j++] = expression[i];
 
                         }
                     }
                 }
                 if (!has_type) {
-                    this->type = buf;
+                    this->tag = buf;
                 }
             }
 
@@ -102,8 +102,12 @@ namespace Parser {
                         tags.push_back(Tag(buf));
                         memset(buf, 0, 512);
                         j = 0;
-                    } else {
-                        buf[j] = expression[i];
+                    } else if (expression[i] == '>') {
+                        i++;
+                        continue;
+                    } 
+                    else {
+                        buf[j++] = expression[i];
                     }
                 }
                 int buf_l = strlen(buf);
@@ -218,6 +222,7 @@ namespace Parser {
                 curl = curl_easy_init();
 
                 struct mem m {0};
+                m.res = (char *) malloc(1);
 
                 curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&m);
@@ -232,8 +237,9 @@ namespace Parser {
                     if (m.res[i] == '\n') {
                         html.push_back(buf);
                         memset(buf, 0, 512);
+                        j = 0;
                     } else {
-                        buf[j] = m.res[i];
+                        buf[j++] = m.res[i];
                     }
                 } 
 

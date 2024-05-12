@@ -148,26 +148,30 @@ namespace Parser {
                     int tag_count = i->get_count();
 
                     for(std::list<std::string>::iterator it = html.begin(); it != html.end(); it++) {
-                        if (it->find(t_open) && !find) {
+                        if (it->find(t_open) != std::string::npos && !find) {
                             if (tag_count > 0) {
                                 tag_count--;
                                 continue;
                             }
                             find = true;
                             buf.push_back(*it);
-                        } else if (it->find(t_open) && find) {
+                        } else if (it->find(t_open) != std::string::npos && find) {
                             same++;
                             buf.push_back(*it);
                         } 
-                        if (it->find(t_close)) {
+                        if (it->find(t_close) != std::string::npos) {
                             if (same > 0) {
                                 same--;
                                 buf.push_back(*it);
+                                continue;
                             } else {
                                 buf.push_back(*it);
                                 html = buf;
                                 break;
                             }
+                        }
+                        if (find) {
+                            buf.push_back(*it);
                         }
                     }
                 }

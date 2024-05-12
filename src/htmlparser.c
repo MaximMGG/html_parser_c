@@ -78,7 +78,6 @@ PARSER_CODE Parser_init(const char *url, html_content *content) {
 }
 
 static int Parser_find_first(html_content *html, TAG *tag) {
-
     int same_tag = 0;
     boolean first_match = false;
     int tag_start = 0;

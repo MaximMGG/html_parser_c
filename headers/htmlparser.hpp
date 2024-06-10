@@ -187,7 +187,7 @@ namespace Parser {
 
     class Url {
         private:
-            std::list<std::string> html;
+            std::list<std::string> *html;
             std::string url;
             CURL *curl;
             CURLcode res;
@@ -199,8 +199,12 @@ namespace Parser {
             };
 
         public:
-            Url(std::string url) : url(url) {}
-            ~Url(){}
+            Url(std::string url) : url(url) {
+                html = new std::list<std::string>;
+            }
+            ~Url(){
+                delete html;
+            }
 
 
             static size_t mset(void *data, size_t size, size_t smemb, void *res) {
@@ -233,13 +237,13 @@ namespace Parser {
                 curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, mset);
 
                 res = curl_easy_perform(curl);
+                curl_easy_cleanup(curl);
 
-                int len = strlen(m.res);
                 char buf[512]{0};
 
-                for(int i = 0, j = 0; i < len; i++) {
+                for(int i = 0, j = 0; i < m.size; i++) {
                     if (m.res[i] == '\n') {
-                        html.push_back(buf);
+                        html->push_back(buf);
                         memset(buf, 0, 512);
                         j = 0;
                     } else {
@@ -250,7 +254,7 @@ namespace Parser {
                 free(m.res);
             }
 
-            std::list<std::string> get_html() {
+            std::list<std::string> *get_html() {
                 return html;
             }
     };
